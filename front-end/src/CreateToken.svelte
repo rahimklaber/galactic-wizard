@@ -2,9 +2,11 @@
 import {Button,TimePickerSelect,SelectItem, Checkbox, ComboBox, DatePicker, DatePickerInput, FileUploaderButton, FileUploaderDropContainer, Form,StructuredList,StructuredListBody,StructuredListCell,StructuredListHead,StructuredListRow,TextArea,TextInput, TextInputSkeleton, Tile, TimePicker} from "carbon-components-svelte"
 import Add16 from "carbon-icons-svelte/lib/Add16"
 import Subtract16 from "carbon-icons-svelte/lib/Subtract16"
-import {Keypair, Networks, TransactionBuilder} from "stellar-sdk"
+import {Asset, Keypair, Networks, TimeoutInfinite, Transaction, TransactionBuilder} from "stellar-sdk"
 import albedo from "@albedo-link/intent"
-import {server,addEntriesToTxBuilder,addCreateAccountToTxBuilder} from "./stellar"
+import { evaluate } from "bigfloat.js";
+
+import {addClaimableBalanceToTxBuilder,server,addEntriesToTxBuilder,addCreateAccountToTxBuilder,addCreateTokenToTxBuilder,addSellOrderToTxBuilder, usdAsset} from "./stellar"
 let entryCount = 0
 
 function addRow(){
@@ -25,11 +27,12 @@ async function handleSubmit(event: Event){
 
     let issueKeypair = Keypair.random()
     let distributionKeypair = Keypair.random()
-    let albedoAddress = albedo.publicKey()
+    let albedoAddress = (await albedo.publicKey()).pubkey
+    console.log(albedoAddress)
     let account = await server.loadAccount(albedoAddress)
     let txBuilder = new TransactionBuilder(account,
     {
-        fee : String(await server.fetchBaseFee()),
+        fee : "500",
         networkPassphrase: Networks.TESTNET
     })
     let entries : Array<[string,string]> = []
@@ -40,14 +43,16 @@ async function handleSubmit(event: Event){
             entries.push([currKey,currValue])
         }
     }
-    addEntriesToTxBuilder(txBuilder,entries,issueKeypair.publicKey())
+    addEntriesToTxBuilder(txBuilder,entries,issueKeypair.publicKey(),albedoAddress)
     addCreateAccountToTxBuilder(txBuilder,issueKeypair.publicKey(),albedoAddress)
     addCreateAccountToTxBuilder(txBuilder,distributionKeypair.publicKey(),albedoAddress)
 
     let tokenName = event.target["tokenName"].value
     let tokenDescription = event.target["tokenDescription"].value
+    let asset = new Asset(tokenName,issueKeypair.publicKey())
     if(tokenType=="NFT"){
 
+        addCreateTokenToTxBuilder(txBuilder,issueKeypair.publicKey(),distributionKeypair.publicKey(),asset,"0.0000001",albedoAddress)
         
 
         if(distributionTypeNft=="Auction"){
@@ -55,18 +60,38 @@ async function handleSubmit(event: Event){
             let endTime = event.target["auctionEndTime"].value
             endDate.setHours(Number(endTime.split(":")[0]),Number(endTime.split(":")[1]))
             let price = event.target["auctionPriceNft"].value
+            //Todo: send request ot server for auction
         }else if (distributionTypeNft == "Sale"){
             let price = event.target["salePriceNft"].value
+            addSellOrderToTxBuilder(txBuilder,asset,usdAsset,"0.0000001",price,distributionKeypair.publicKey(),albedoAddress)
         }else if (distributionTypeNft == "reserve for Adress (claimable)"){
             let destAddress = event.target["destinationAddressNft"].value
+            addClaimableBalanceToTxBuilder(txBuilder,asset,"0.0000001",destAddress,distributionKeypair.publicKey(),albedoAddress)
         }
     }else if(tokenType == "Normal tokens"){
+        let amountRaw = event.target["amount"].value
+        let amount = String(evaluate(`${amountRaw} * 0.0000001`,-7))
+        console.log(amount)
+        addCreateTokenToTxBuilder(txBuilder,issueKeypair.publicKey(),distributionKeypair.publicKey(),asset,amount,albedoAddress)
         if(distributionTypeNormal == "Sale"){
             let price = event.target["salePriceNormal"].value
-            let amountToCreate = event.target["amount"].value
-
+            addSellOrderToTxBuilder(txBuilder,asset,usdAsset,amount,price,distributionKeypair.publicKey(),albedoAddress)
+        }else if (distributionTypeNormal=="reserve for Adress (claimable)"){
+            let destAddress = event.target["destinationAddressNormaal"].value
+            addClaimableBalanceToTxBuilder(txBuilder,asset,amount,destAddress,distributionKeypair.publicKey(),albedoAddress)
         }
     }
+    let tx = txBuilder.setTimeout(TimeoutInfinite).build()
+    tx.sign(issueKeypair)
+    tx.sign(distributionKeypair) // dont do if auction
+    let signedAlbedoXdr = (await albedo.tx({
+        xdr: tx.toXDR(),
+        network : 'testnet'
+    })).signed_envelope_xdr
+    console.log(signedAlbedoXdr)
+
+    await server.submitTransaction(TransactionBuilder.fromXDR(signedAlbedoXdr,Networks.TESTNET))
+    console.log("gottem")
 }
 </script>
 
@@ -160,7 +185,7 @@ async function handleSubmit(event: Event){
         </StructuredList>
     </div>
     {/if}
-
+<div class="margin10">
     <Button
     hasIconOnly
     iconDescription="Add a new entry"
@@ -177,7 +202,7 @@ async function handleSubmit(event: Event){
     icon={Subtract16}
     on:click={removeRow}
     />
-
+</div>
 
     <div class="margin10">
     <FileUploaderDropContainer multiple id="dataUpload" labelText="Upload all data files you wish to associate with this token. The file name has a max allowed length of 64" />
