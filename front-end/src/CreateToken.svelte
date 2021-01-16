@@ -6,6 +6,8 @@ import {Asset, Keypair, Networks, TimeoutInfinite, Transaction, TransactionBuild
 import albedo from "@albedo-link/intent"
 import { evaluate,BigFloat } from "bigfloat.js";
 import {client} from "./ipfs"
+import {serverUrl} from "./backend"
+import axios from "axios"
 window.xd = client
 import {addLockAccountToTxBuilder,addClaimableBalanceToTxBuilder,server,addEntriesToTxBuilder,addCreateAccountToTxBuilder,addCreateTokenToTxBuilder,addSellOrderToTxBuilder, usdAsset} from "./stellar"
 let entryCount = 0
@@ -117,6 +119,14 @@ async function handleSubmit(event: Event){
     if(exportKeys){
         alert(`issue secret key: ${issueKeypair.publicKey()}\n distribution secret key: ${distributionKeypair.publicKey()}`)
     }
+    await axios.post(`${serverUrl}/tokens`,
+    {
+        name: tokenName,
+        description: tokenDescription,
+        issueAccount : issueKeypair.publicKey(),
+        claimAddress : "",
+        sale: false
+    })
 }
 </script>
 
