@@ -1,22 +1,30 @@
 <script lang="ts">
-import {Button, ComboBox, DatePicker, DatePickerInput, FileUploaderButton, FileUploaderDropContainer, Form,StructuredList,StructuredListBody,StructuredListCell,StructuredListHead,StructuredListRow,TextArea,TextInput, TextInputSkeleton, Tile, TimePicker} from "carbon-components-svelte"
+import {Button,TimePickerSelect,SelectItem, Checkbox, ComboBox, DatePicker, DatePickerInput, FileUploaderButton, FileUploaderDropContainer, Form,StructuredList,StructuredListBody,StructuredListCell,StructuredListHead,StructuredListRow,TextArea,TextInput, TextInputSkeleton, Tile, TimePicker} from "carbon-components-svelte"
 import Add16 from "carbon-icons-svelte/lib/Add16"
 import Subtract16 from "carbon-icons-svelte/lib/Subtract16"
-function handleSubmit(event: Event){
 
-}
 
+let entryCount = 0
 
 function addRow(){
-
+    entryCount = entryCount + 1
 }
 function removeRow(){
-
+    if(entryCount > 0){
+        entryCount = entryCount - 1
+    }
 }
 
 let tokenType = ""
 let distributionTypeNft =""
 let distributionTypeNormal =""
+function createNft(){}
+function handleSubmit(event: Event){
+    window.yeet = event
+    // if(tokenType=="NFT"){
+    //     event.target.
+    // }
+}
 </script>
 
 <style>
@@ -50,10 +58,12 @@ let distributionTypeNormal =""
             items="{[{id: "0",text: "Auction"},{id: "1",text: "Sale"},{id: "2",text: "reserve for Adress (claimable)"}]}"
             />
             {#if distributionTypeNft=="Auction"}
-                <DatePicker>
+                <DatePicker datePickerType="single">
                     <DatePickerInput id="auctionEndDate" placeholder="dd/mm/yyyy" labelText="Auction end date"/>
                 </DatePicker>
-                <TimePicker id="auctionEndTime" placeholder="hh:mm"/>
+                <TimePicker pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$" id="auctionEndTime" placeholder="hh:mm" labelText="End time in (gmt)">
+
+                </TimePicker>
                 <TextInput id="auctionPriceNft" labelText="Initial price (USD)"/>
 
             {/if}
@@ -81,7 +91,8 @@ let distributionTypeNormal =""
         </div>
     {/if}
 
-
+    <label class= "bx--label margin10">Store data on stellar</label>
+    {#if entryCount > 0}
     <div>
         <StructuredList>
             <StructuredListHead>
@@ -91,39 +102,49 @@ let distributionTypeNormal =""
                 </StructuredListRow>
             </StructuredListHead>
             <StructuredListBody>
-                <StructuredListRow>
-                    <StructuredListCell>
-                        <TextInput placeholder="key"/>
-                    </StructuredListCell>
-                    <StructuredListCell>
-                        <TextInput placeholder="value"/>
-                    </StructuredListCell>
-                </StructuredListRow>
+            {#each Array(entryCount) as _, i}
+               <StructuredListRow>
+                   <StructuredListCell>
+                       <TextInput placeholder="key" id="key-{i}"></TextInput>
+                   </StructuredListCell>
+                   <StructuredListCell>
+                    <TextInput placeholder="value" id="value-{i}"></TextInput>
+                </StructuredListCell>
+               </StructuredListRow>
+            {/each}
             </StructuredListBody>
         </StructuredList>
-        <Button
-        hasIconOnly
-        iconDescription="Add a new entry"
-        tooltipPosition="bottom"
-        tooltipAlignment="start"
-        icon={Add16}
-        on:click={addRow}
-        />
-        <Button
-        hasIconOnly
-        iconDescription="Remove last entry"
-        tooltipPosition="bottom"
-        tooltipAlignment="start"
-        icon={Subtract16}
-        on:click={removeRow}
-        />
     </div>
+    {/if}
+
+    <Button
+    hasIconOnly
+    iconDescription="Add a new entry"
+    tooltipPosition="bottom"
+    tooltipAlignment="start"
+    icon={Add16}
+    on:click={addRow}
+    />
+    <Button
+    hasIconOnly
+    iconDescription="Remove last entry"
+    tooltipPosition="bottom"
+    tooltipAlignment="start"
+    icon={Subtract16}
+    on:click={removeRow}
+    />
 
 
     <div class="margin10">
     <FileUploaderDropContainer multiple id="dataUpload" labelText="Upload all data files you wish to associate with this token. The file name has a max allowed length of 64" />
 </div>
     <FileUploaderButton kind ="secondary" id="imageUpload" labelText="Upload Image" />
+    <div class="margin10">
+        <Checkbox 
+        labelText="Export keys"
+        id="Export keys"
+        />
+    </div>
     <div class="margin10">
     <Button type="submit">
         Create Token
