@@ -2,8 +2,9 @@
 import {Button,TimePickerSelect,SelectItem, Checkbox, ComboBox, DatePicker, DatePickerInput, FileUploaderButton, FileUploaderDropContainer, Form,StructuredList,StructuredListBody,StructuredListCell,StructuredListHead,StructuredListRow,TextArea,TextInput, TextInputSkeleton, Tile, TimePicker} from "carbon-components-svelte"
 import Add16 from "carbon-icons-svelte/lib/Add16"
 import Subtract16 from "carbon-icons-svelte/lib/Subtract16"
-
-
+import {Networks, TransactionBuilder} from "stellar-sdk"
+import albedo from "@albedo-link/intent"
+import {server} from "./stellar"
 let entryCount = 0
 
 function addRow(){
@@ -19,11 +20,43 @@ let tokenType = ""
 let distributionTypeNft =""
 let distributionTypeNormal =""
 function createNft(){}
-function handleSubmit(event: Event){
+async function handleSubmit(event: Event){
     window.yeet = event
-    // if(tokenType=="NFT"){
-    //     event.target.
-    // }
+    let albedoAddress = albedo.publicKey()
+    let account = await server.loadAccount(albedoAddress)
+    let txBuilder = new TransactionBuilder(account,
+    {
+        fee : String(await server.fetchBaseFee()),
+        networkPassphrase: Networks.TESTNET
+    })
+    let entries : Array<[string,string]> = []
+    if(entryCount > 0){
+        for(let i = 0; i < entryCount;i++){
+            let currKey = event.target[`key-${i}`].value
+            let currValue = event.target[`value-${i}`].value
+            entries.push([currKey,currValue])
+        }
+    }
+    let tokenName = event.target["tokenName"].value
+    let tokenDescription = event.target["tokenDescription"].value
+    if(tokenType=="NFT"){
+        if(distributionTypeNft=="Auction"){
+            let endDate = new Date(event.target.auctionEndDate.value)
+            let endTime = event.target.auctionEndTime.value
+            endDate.setHours(Number(endTime.split(":")[0]),Number(endTime.split(":")[1]))
+            let price = event.target.auctionPriceNft.value
+        }else if (distributionTypeNft == "Sale"){
+            let price = event.target["salePriceNft"].value
+        }else if (distributionTypeNft == "reserve for Adress (claimable)"){
+            let destAddress = event.target["destinationAddressNft"].value
+        }
+    }else if(tokenType == "Normal tokens"){
+        if(distributionTypeNormal == "Sale"){
+            let price = event.target["salePriceNormal"].value
+            let amountToCreate = event.target["amount"].value
+
+        }
+    }
 }
 </script>
 
@@ -61,7 +94,7 @@ function handleSubmit(event: Event){
                 <DatePicker datePickerType="single">
                     <DatePickerInput id="auctionEndDate" placeholder="dd/mm/yyyy" labelText="Auction end date"/>
                 </DatePicker>
-                <TimePicker pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$" id="auctionEndTime" placeholder="hh:mm" labelText="End time in (gmt)">
+                <TimePicker pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$" id="auctionEndTime" placeholder="hh:mm" labelText="End time in your local time)">
 
                 </TimePicker>
                 <TextInput id="auctionPriceNft" labelText="Initial price (USD)"/>
@@ -88,6 +121,7 @@ function handleSubmit(event: Event){
         {#if distributionTypeNormal=="Sale"}
         <TextInput id="salePriceNormal" labelText="price (USD)"/>
         {/if}
+        <TextInput id="amount" labelText="Amount of tokens to create"/>
         </div>
     {/if}
 
