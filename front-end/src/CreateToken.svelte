@@ -1,5 +1,5 @@
 <script lang="ts">
-import {Button,TimePickerSelect,SelectItem, Checkbox, ComboBox, DatePicker, DatePickerInput, FileUploaderButton, FileUploaderDropContainer, Form,StructuredList,StructuredListBody,StructuredListCell,StructuredListHead,StructuredListRow,TextArea,TextInput, TextInputSkeleton, Tile, TimePicker} from "carbon-components-svelte"
+import {Modal,Button,TimePickerSelect,SelectItem, Checkbox, ComboBox, DatePicker, DatePickerInput, FileUploaderButton, FileUploaderDropContainer, Form,StructuredList,StructuredListBody,StructuredListCell,StructuredListHead,StructuredListRow,TextArea,TextInput, TextInputSkeleton, Tile, TimePicker} from "carbon-components-svelte"
 import Add16 from "carbon-icons-svelte/lib/Add16"
 import Subtract16 from "carbon-icons-svelte/lib/Subtract16"
 import {Asset, Keypair, Networks, TimeoutInfinite, Transaction, TransactionBuilder} from "stellar-sdk"
@@ -18,7 +18,7 @@ function removeRow(){
         entryCount = entryCount - 1
     }
 }
-
+let modalOpen=false
 let tokenType = ""
 let distributionTypeNft =""
 let distributionTypeNormal =""
@@ -114,6 +114,9 @@ async function handleSubmit(event: Event){
 
     await server.submitTransaction(TransactionBuilder.fromXDR(signedAlbedoXdr,Networks.TESTNET))
     console.log("gottem")
+    if(exportKeys){
+        alert(`issue secret key: ${issueKeypair.publicKey()}\n distribution secret key: ${distributionKeypair.publicKey()}`)
+    }
 }
 </script>
 
@@ -250,5 +253,4 @@ async function handleSubmit(event: Event){
     </Button>
 </div>
 </Form>
-
 </div>
