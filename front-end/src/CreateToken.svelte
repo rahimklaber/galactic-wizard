@@ -4,7 +4,7 @@ import Add16 from "carbon-icons-svelte/lib/Add16"
 import Subtract16 from "carbon-icons-svelte/lib/Subtract16"
 import {Asset, Keypair, Networks, TimeoutInfinite, Transaction, TransactionBuilder} from "stellar-sdk"
 import albedo from "@albedo-link/intent"
-import { evaluate } from "bigfloat.js";
+import { evaluate,BigFloat } from "bigfloat.js";
 
 import {addClaimableBalanceToTxBuilder,server,addEntriesToTxBuilder,addCreateAccountToTxBuilder,addCreateTokenToTxBuilder,addSellOrderToTxBuilder, usdAsset} from "./stellar"
 let entryCount = 0
@@ -43,9 +43,11 @@ async function handleSubmit(event: Event){
             entries.push([currKey,currValue])
         }
     }
-    addEntriesToTxBuilder(txBuilder,entries,issueKeypair.publicKey(),albedoAddress)
+
     addCreateAccountToTxBuilder(txBuilder,issueKeypair.publicKey(),albedoAddress)
     addCreateAccountToTxBuilder(txBuilder,distributionKeypair.publicKey(),albedoAddress)
+    addEntriesToTxBuilder(txBuilder,entries,issueKeypair.publicKey(),albedoAddress)
+
 
     let tokenName = event.target["tokenName"].value
     let tokenDescription = event.target["tokenDescription"].value
@@ -62,22 +64,23 @@ async function handleSubmit(event: Event){
             let price = event.target["auctionPriceNft"].value
             //Todo: send request ot server for auction
         }else if (distributionTypeNft == "Sale"){
-            let price = event.target["salePriceNft"].value
-            addSellOrderToTxBuilder(txBuilder,asset,usdAsset,"0.0000001",price,distributionKeypair.publicKey(),albedoAddress)
+            let price = new BigFloat(event.target["salePriceNft"].value).times("10000000").toString()
+            addSellOrderToTxBuilder(txBuilder,asset,usdAsset,"0.0000001",price,albedoAddress,distributionKeypair.publicKey())
         }else if (distributionTypeNft == "reserve for Adress (claimable)"){
             let destAddress = event.target["destinationAddressNft"].value
             addClaimableBalanceToTxBuilder(txBuilder,asset,"0.0000001",destAddress,distributionKeypair.publicKey(),albedoAddress)
         }
     }else if(tokenType == "Normal tokens"){
+        console.log("hi")
         let amountRaw = event.target["amount"].value
-        let amount = String(evaluate(`${amountRaw} * 0.0000001`,-7))
+        let amount = (new BigFloat("0.0000001")).times(amountRaw).toString()
         console.log(amount)
         addCreateTokenToTxBuilder(txBuilder,issueKeypair.publicKey(),distributionKeypair.publicKey(),asset,amount,albedoAddress)
         if(distributionTypeNormal == "Sale"){
-            let price = event.target["salePriceNormal"].value
-            addSellOrderToTxBuilder(txBuilder,asset,usdAsset,amount,price,distributionKeypair.publicKey(),albedoAddress)
+            let price = new BigFloat(event.target["salePriceNormal"].value).times("10000000").toString()
+            addSellOrderToTxBuilder(txBuilder,asset,usdAsset,amount,price,albedoAddress,distributionKeypair.publicKey())
         }else if (distributionTypeNormal=="reserve for Adress (claimable)"){
-            let destAddress = event.target["destinationAddressNormaal"].value
+            let destAddress = event.target["destinationAddressNormal"].value
             addClaimableBalanceToTxBuilder(txBuilder,asset,amount,destAddress,distributionKeypair.publicKey(),albedoAddress)
         }
     }
@@ -90,7 +93,7 @@ async function handleSubmit(event: Event){
     })).signed_envelope_xdr
     console.log(signedAlbedoXdr)
 
-    await server.submitTransaction(TransactionBuilder.fromXDR(signedAlbedoXdr,Networks.TESTNET))
+    // await server.submitTransaction(TransactionBuilder.fromXDR(signedAlbedoXdr,Networks.TESTNET))
     console.log("gottem")
 }
 </script>

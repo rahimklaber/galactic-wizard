@@ -15,7 +15,8 @@ export function addEntriesToTxBuilder(builder: TransactionBuilder, entries: Arra
             Operation.manageData(
                 {
                    name : key,
-                   value : value 
+                   value : value,
+                   source : issueAddress
                 }
             )
         )
@@ -80,13 +81,8 @@ export function addCreateTokenToTxBuilder(builder: TransactionBuilder, issueAddr
     return builder
 }
 
-export function addSellOrderToTxBuilder(builder:TransactionBuilder,sellAsset: Asset,buyAsset: Asset,amount: string,price : string, sourceAddress : string, sponsorAddress: string):TransactionBuilder{
-    builder.addOperation(
-        Operation.beginSponsoringFutureReserves({
-            source : sponsorAddress,
-            sponsoredId : sourceAddress
-        })
-    )
+export function addSellOrderToTxBuilder(builder:TransactionBuilder,sellAsset: Asset,buyAsset: Asset,amount: string,price : string, sourceAddress : string, distributionAddress : string):TransactionBuilder{
+
 
     builder.addOperation(
         Operation.changeTrust({
@@ -94,7 +90,24 @@ export function addSellOrderToTxBuilder(builder:TransactionBuilder,sellAsset: As
             source: sourceAddress
         })
     )
-    
+
+    builder.addOperation(
+        Operation.changeTrust({
+            asset : sellAsset,
+            source: sourceAddress
+        })
+    )
+
+    builder.addOperation(
+        Operation.payment(
+            {
+                source : distributionAddress,
+                amount : amount,
+                asset : sellAsset,
+                destination : sourceAddress
+            }
+        )
+    )
     builder.addOperation(
         Operation.manageSellOffer({
             selling : sellAsset,
@@ -105,11 +118,6 @@ export function addSellOrderToTxBuilder(builder:TransactionBuilder,sellAsset: As
         })
     )
 
-    builder.addOperation(
-        Operation.endSponsoringFutureReserves({
-            source : sourceAddress
-        })
-    )
     return builder
 }
 
