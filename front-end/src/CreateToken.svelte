@@ -2,9 +2,9 @@
 import {Button,TimePickerSelect,SelectItem, Checkbox, ComboBox, DatePicker, DatePickerInput, FileUploaderButton, FileUploaderDropContainer, Form,StructuredList,StructuredListBody,StructuredListCell,StructuredListHead,StructuredListRow,TextArea,TextInput, TextInputSkeleton, Tile, TimePicker} from "carbon-components-svelte"
 import Add16 from "carbon-icons-svelte/lib/Add16"
 import Subtract16 from "carbon-icons-svelte/lib/Subtract16"
-import {Networks, TransactionBuilder} from "stellar-sdk"
+import {Keypair, Networks, TransactionBuilder} from "stellar-sdk"
 import albedo from "@albedo-link/intent"
-import {server} from "./stellar"
+import {server,addEntriesToTxBuilder,addCreateAccountToTxBuilder} from "./stellar"
 let entryCount = 0
 
 function addRow(){
@@ -22,6 +22,9 @@ let distributionTypeNormal =""
 function createNft(){}
 async function handleSubmit(event: Event){
     window.yeet = event
+
+    let issueKeypair = Keypair.random()
+    let distributionKeypair = Keypair.random()
     let albedoAddress = albedo.publicKey()
     let account = await server.loadAccount(albedoAddress)
     let txBuilder = new TransactionBuilder(account,
@@ -37,14 +40,21 @@ async function handleSubmit(event: Event){
             entries.push([currKey,currValue])
         }
     }
+    addEntriesToTxBuilder(txBuilder,entries,issueKeypair.publicKey())
+    addCreateAccountToTxBuilder(txBuilder,issueKeypair.publicKey(),albedoAddress)
+    addCreateAccountToTxBuilder(txBuilder,distributionKeypair.publicKey(),albedoAddress)
+
     let tokenName = event.target["tokenName"].value
     let tokenDescription = event.target["tokenDescription"].value
     if(tokenType=="NFT"){
+
+        
+
         if(distributionTypeNft=="Auction"){
-            let endDate = new Date(event.target.auctionEndDate.value)
-            let endTime = event.target.auctionEndTime.value
+            let endDate = new Date(event.target["auctionEndDate"].value)
+            let endTime = event.target["auctionEndTime"].value
             endDate.setHours(Number(endTime.split(":")[0]),Number(endTime.split(":")[1]))
-            let price = event.target.auctionPriceNft.value
+            let price = event.target["auctionPriceNft"].value
         }else if (distributionTypeNft == "Sale"){
             let price = event.target["salePriceNft"].value
         }else if (distributionTypeNft == "reserve for Adress (claimable)"){
@@ -176,7 +186,13 @@ async function handleSubmit(event: Event){
     <div class="margin10">
         <Checkbox 
         labelText="Export keys"
-        id="Export keys"
+        id="exportKeys"
+        />
+    </div>
+    <div class="margin10">
+        <Checkbox 
+        labelText="Lock issuing account"
+        id="lockAccount"
         />
     </div>
     <div class="margin10">
