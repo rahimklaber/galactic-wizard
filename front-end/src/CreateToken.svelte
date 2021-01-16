@@ -5,8 +5,9 @@ import Subtract16 from "carbon-icons-svelte/lib/Subtract16"
 import {Asset, Keypair, Networks, TimeoutInfinite, Transaction, TransactionBuilder} from "stellar-sdk"
 import albedo from "@albedo-link/intent"
 import { evaluate,BigFloat } from "bigfloat.js";
-
-import {addClaimableBalanceToTxBuilder,server,addEntriesToTxBuilder,addCreateAccountToTxBuilder,addCreateTokenToTxBuilder,addSellOrderToTxBuilder, usdAsset} from "./stellar"
+import {client} from "./ipfs"
+window.xd = client
+import {addLockAccountToTxBuilder,addClaimableBalanceToTxBuilder,server,addEntriesToTxBuilder,addCreateAccountToTxBuilder,addCreateTokenToTxBuilder,addSellOrderToTxBuilder, usdAsset} from "./stellar"
 let entryCount = 0
 
 function addRow(){
@@ -21,6 +22,8 @@ function removeRow(){
 let tokenType = ""
 let distributionTypeNft =""
 let distributionTypeNormal =""
+let lockAccount = false
+let exportKeys = false
 function createNft(){}
 async function handleSubmit(event: Event){
     window.yeet = event
@@ -36,6 +39,19 @@ async function handleSubmit(event: Event){
         networkPassphrase: Networks.TESTNET
     })
     let entries : Array<[string,string]> = []
+    if(event.target["imageUpload"].files.length > 0){
+        let image : File = event.target["imageUpload"].files[0]
+       let ipfsHash = (await client.add(image.stream())).path
+       entries.push(["image",ipfsHash])
+    }
+    if(event.target["dataUpload"].files.length > 0){
+        let files = event.target["dataUpload"].files
+        for(let i = 0 ; i < files.length ; i++){
+            let file : File = files[i]
+            let ipfsHash = (await client.add(file.stream())).path
+            entries.push([file.name,ipfsHash])
+        }
+    }
     if(entryCount > 0){
         for(let i = 0; i < entryCount;i++){
             let currKey = event.target[`key-${i}`].value
@@ -84,6 +100,9 @@ async function handleSubmit(event: Event){
             addClaimableBalanceToTxBuilder(txBuilder,asset,amount,destAddress,distributionKeypair.publicKey(),albedoAddress)
         }
     }
+    if(lockAccount){
+        addLockAccountToTxBuilder(txBuilder,issueKeypair.publicKey())
+    }
     let tx = txBuilder.setTimeout(TimeoutInfinite).build()
     tx.sign(issueKeypair)
     tx.sign(distributionKeypair) // dont do if auction
@@ -93,7 +112,7 @@ async function handleSubmit(event: Event){
     })).signed_envelope_xdr
     console.log(signedAlbedoXdr)
 
-    // await server.submitTransaction(TransactionBuilder.fromXDR(signedAlbedoXdr,Networks.TESTNET))
+    await server.submitTransaction(TransactionBuilder.fromXDR(signedAlbedoXdr,Networks.TESTNET))
     console.log("gottem")
 }
 </script>
@@ -213,12 +232,14 @@ async function handleSubmit(event: Event){
     <FileUploaderButton kind ="secondary" id="imageUpload" labelText="Upload Image" />
     <div class="margin10">
         <Checkbox 
+        bind:checked={exportKeys}
         labelText="Export keys"
         id="exportKeys"
         />
     </div>
     <div class="margin10">
         <Checkbox 
+        bind:checked={lockAccount}
         labelText="Lock issuing account"
         id="lockAccount"
         />

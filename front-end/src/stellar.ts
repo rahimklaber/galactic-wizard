@@ -148,3 +148,15 @@ export function addClaimableBalanceToTxBuilder(builder: TransactionBuilder,asset
 
     return builder
 }
+
+export function addLockAccountToTxBuilder(builder: TransactionBuilder, accountToLock: string): TransactionBuilder{
+   return builder.addOperation(
+        Operation.setOptions(
+            {
+                source : accountToLock,
+                medThreshold : 2,
+                highThreshold : 2
+            }
+        )
+    )
+}
