@@ -29,7 +29,10 @@ let exportKeys = false
 function createNft(){}
 async function handleSubmit(event: Event){
     window.yeet = event
-
+    let claimAddress = ""
+    let sale = false
+    let claim = false
+    let auction = false
     let issueKeypair = Keypair.random()
     let distributionKeypair = Keypair.random()
     let albedoAddress = (await albedo.publicKey()).pubkey
@@ -76,16 +79,20 @@ async function handleSubmit(event: Event){
         
 
         if(distributionTypeNft=="Auction"){
+            auction = true
             let endDate = new Date(event.target["auctionEndDate"].value)
             let endTime = event.target["auctionEndTime"].value
             endDate.setHours(Number(endTime.split(":")[0]),Number(endTime.split(":")[1]))
             let price = event.target["auctionPriceNft"].value
             //Todo: send request ot server for auction
         }else if (distributionTypeNft == "Sale"){
+            sale = true
             let price = new BigFloat(event.target["salePriceNft"].value).times("10000000").toString()
             addSellOrderToTxBuilder(txBuilder,asset,usdAsset,"0.0000001",price,albedoAddress,distributionKeypair.publicKey())
         }else if (distributionTypeNft == "reserve for Adress (claimable)"){
+            claim = true
             let destAddress = event.target["destinationAddressNft"].value
+            claimAddress = destAddress
             addClaimableBalanceToTxBuilder(txBuilder,asset,"0.0000001",destAddress,distributionKeypair.publicKey(),albedoAddress)
         }
     }else if(tokenType == "Normal tokens"){
@@ -95,10 +102,13 @@ async function handleSubmit(event: Event){
         console.log(amount)
         addCreateTokenToTxBuilder(txBuilder,issueKeypair.publicKey(),distributionKeypair.publicKey(),asset,amount,albedoAddress)
         if(distributionTypeNormal == "Sale"){
+            sale = true
             let price = new BigFloat(event.target["salePriceNormal"].value).times("10000000").toString()
             addSellOrderToTxBuilder(txBuilder,asset,usdAsset,amount,price,albedoAddress,distributionKeypair.publicKey())
         }else if (distributionTypeNormal=="reserve for Adress (claimable)"){
+            claim = true
             let destAddress = event.target["destinationAddressNormal"].value
+            claimAddress = destAddress
             addClaimableBalanceToTxBuilder(txBuilder,asset,amount,destAddress,distributionKeypair.publicKey(),albedoAddress)
         }
     }
@@ -125,7 +135,9 @@ async function handleSubmit(event: Event){
         description: tokenDescription,
         issueAccount : issueKeypair.publicKey(),
         claimAddress : "",
-        sale: false
+        sale: sale,
+        auction : auction,
+        claim: claim
     })
 }
 </script>
