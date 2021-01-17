@@ -124,8 +124,12 @@ async function handleSubmit(event: Event){
         network : 'testnet'
     })).signed_envelope_xdr
     console.log(signedAlbedoXdr)
-
-    await server.submitTransaction(TransactionBuilder.fromXDR(signedAlbedoXdr,Networks.TESTNET))
+    try{
+        await server.submitTransaction(TransactionBuilder.fromXDR(signedAlbedoXdr,Networks.TESTNET))
+        alert("token created")
+    }catch(e){
+        alert("failed, try again")
+    }
     console.log("gottem")
     if(exportKeys){
         alert(`issue secret key: ${issueKeypair.publicKey()}\n distribution secret key: ${distributionKeypair.publicKey()}`)
