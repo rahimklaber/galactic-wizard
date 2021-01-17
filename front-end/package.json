@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@albedo-link/intent": "^0.10.1",
+    "@carbon/type": "^10.19.0",
     "axios": "^0.21.1",
     "bigfloat.js": "^3.0.1",
     "ipfs-http-client": "^48.2.0",

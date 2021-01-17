@@ -8,6 +8,7 @@ import { evaluate,BigFloat } from "bigfloat.js";
 import {client} from "./ipfs"
 import {serverUrl} from "./backend"
 import axios from "axios"
+import {publicKey} from "./store"
 window.xd = client
 import {addLockAccountToTxBuilder,addClaimableBalanceToTxBuilder,server,addEntriesToTxBuilder,addCreateAccountToTxBuilder,addCreateTokenToTxBuilder,addSellOrderToTxBuilder, usdAsset} from "./stellar"
 let entryCount = 0
@@ -35,7 +36,7 @@ async function handleSubmit(event: Event){
     let auction = false
     let issueKeypair = Keypair.random()
     let distributionKeypair = Keypair.random()
-    let albedoAddress = (await albedo.publicKey()).pubkey
+    let albedoAddress = await publicKey()
     console.log(albedoAddress)
     let account = await server.loadAccount(albedoAddress)
     let txBuilder = new TransactionBuilder(account,

@@ -2,6 +2,7 @@
 <style lang="scss" global>
 	@import "carbon-components-svelte/css/g10";
 
+
 	.content{
 		display: flex;
 		justify-content: center;
