@@ -119,7 +119,7 @@
             <br>
             <strong>Type</strong> : {type}
             <br>
-            <strong>Amount</strong> : {amount}
+            <strong>Supply</strong> : {amount}
             <br>
         </div>
         <div class="right">
@@ -140,7 +140,7 @@
             <br>
             <strong>Type</strong> : {type}
             <br>
-            <strong>Amount</strong> : {amount}
+            <strong>Supply</strong> : {amount}
             <br>
             <strong>IssueAddress</strong>: {issueAddress}
             <br>

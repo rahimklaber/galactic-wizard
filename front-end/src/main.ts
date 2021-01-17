@@ -4,6 +4,7 @@ import {store} from "./store"
 import CreateToken from "./CreateToken.svelte"
 import Tokens from "./tokens.svelte"
 import ClaimTokens from "./ClaimTokens.svelte"
+import BuyTokens from "./BuyTokens.svelte"
 const app = new App({
 	target: document.body,
 });
@@ -16,7 +17,9 @@ router.on(
 			store.set(Tokens)
 		},"/claim": function(){
 			store.set(ClaimTokens)
-		},
+		},"/buy": function(){
+			store.set(BuyTokens)
+		}
 
 	}
 ).resolve()

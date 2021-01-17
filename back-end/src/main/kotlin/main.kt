@@ -50,6 +50,19 @@ fun main(args: Array<String>) {
         it.result(tokensJson)
     }
 
+    app.get("/forsale"){
+        val tokens = database.tokens
+            .filter {
+                (it.sale eq true)
+            }
+            .asKotlinSequence()
+
+            .map {
+                TokenImpl.fromDbToken(it)
+            }.toList()
+        val tokensJson = tokenListAdapter.toJson(tokens)
+        it.result(tokensJson)
+    }
 
     app.start(3000)
 }

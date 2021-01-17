@@ -40,6 +40,8 @@ bind:isSideNavOpen>
     <HeaderNavItem href="/create" data-navigo text="Create Token" />
 	<HeaderNavItem href="/tokens" data-navigo text="View Tokens" />
 	<HeaderNavItem href="/claim" data-navigo text="Claim Tokens" />
+	<HeaderNavItem href="/buy" data-navigo text="Buy Tokens" />
+
   </HeaderNav>
 </Header>
 
@@ -48,6 +50,8 @@ bind:isSideNavOpen>
 		<SideNavLink href="/create" data-navigo text="Create Token" />
 		<SideNavLink href="/tokens" data-navigo text="View Tokens" />
 		<SideNavLink href="/claim" data-navigo text="Claim Tokens" />
+		<SideNavLink href="/buy" data-navigo text="Buy Tokens" />
+
 	  </SideNavItems>
 </SideNav>
 
