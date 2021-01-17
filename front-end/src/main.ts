@@ -3,6 +3,7 @@ import {router} from "./navigo"
 import {store} from "./store"
 import CreateToken from "./CreateToken.svelte"
 import Tokens from "./tokens.svelte"
+import ClaimTokens from "./ClaimTokens.svelte"
 const app = new App({
 	target: document.body,
 });
@@ -13,7 +14,9 @@ router.on(
 		},
 		"/tokens": function(){
 			store.set(Tokens)
-		}
+		},"/claim": function(){
+			store.set(ClaimTokens)
+		},
 
 	}
 ).resolve()

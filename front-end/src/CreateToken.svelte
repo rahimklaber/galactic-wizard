@@ -135,7 +135,7 @@ async function handleSubmit(event: Event){
         name: tokenName,
         description: tokenDescription,
         issueAccount : issueKeypair.publicKey(),
-        claimAddress : "",
+        claimAddress : claimAddress,
         sale: sale,
         auction : auction,
         claim: claim
