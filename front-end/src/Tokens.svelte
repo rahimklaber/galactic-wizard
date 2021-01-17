@@ -13,7 +13,7 @@ async function create() {
 
 <style>
     .tokens{
-        width: 33vw;
+        width: 40vw;
         max-width: 600px;
         margin-top: 60px;
     }

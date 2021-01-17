@@ -1,11 +1,11 @@
 <script lang="ts">
     import {Link ,ExpandableTile ,Modal,Button,TimePickerSelect,SelectItem, Checkbox, ComboBox, DatePicker, DatePickerInput, FileUploaderButton, FileUploaderDropContainer, Form,StructuredList,StructuredListBody,StructuredListCell,StructuredListHead,StructuredListRow,TextArea,TextInput, TextInputSkeleton, Tile, TimePicker} from "carbon-components-svelte"
     import {publicKey} from "./store"
-    import {server} from "./stellar"
+    import {server,usdAsset} from "./stellar"
     import {getHashUrl} from "./ipfs"
     import albedo from "@albedo-link/intent"
     import { Operation,AccountResponse, Asset, Networks, TransactionBuilder } from "stellar-sdk"
-    import { BigFloat, div } from "bigfloat.js"
+    import { BigFloat, div, set_precision } from "bigfloat.js"
     export let name : string 
     export let description : string
     export let issueAddress : string
@@ -22,6 +22,10 @@
     let claimId : string
     let buttonText = "Claim"
     let viewType = "default"
+    let salePrice : string
+    let amoutnAvailable : string
+    let amountTobuy : string
+    set_precision(-7)
     async function create(){
         let asset = new Asset(name,issueAddress)
         if(claim){
@@ -34,6 +38,12 @@
             }
 
     }
+        if(sale){
+            let order = await server.orderbook(asset,usdAsset).call()
+            salePrice = (new BigFloat(order.asks[0].price)).div(10000000).toString()
+            amoutnAvailable = (new BigFloat(order.asks[0].amount)).times(10000000).toString()
+            viewType = "sale"
+        }
         albedoAccound = await server.loadAccount(await publicKey())
         issueAccount = await server.loadAccount(issueAddress)
         data = issueAccount.data_attr
@@ -83,6 +93,50 @@
         await server.submitTransaction(TransactionBuilder.fromXDR(signedAlbedoXdr,Networks.TESTNET)).then((res)=>viewType = "claimed").catch((reason)=>alert("something went wrong"))
 
     }
+    async function buyAsset(){
+        let asset = new Asset(name,issueAddress)
+        console.log((new BigFloat(amountTobuy)).dividedBy(10000000).toString())
+        expanded = !expanded
+        let tx = new TransactionBuilder(albedoAccound,{
+            fee: "500",
+            networkPassphrase : Networks.TESTNET
+        }).addOperation(
+            Operation.changeTrust({
+                asset:asset
+            })
+        )
+        .addOperation(
+            Operation.pathPaymentStrictReceive({
+                sendAsset: Asset.native(),
+                destination : albedoAccound.accountId(),
+                destAsset : asset,
+                destAmount : (new BigFloat(amountTobuy)).dividedBy(10000000).toString(),
+                sendMax : "5000",
+                path : [usdAsset]
+            })
+        ).setTimeout(50).build()
+
+        let signedAlbedoXdr = (await albedo.tx({
+        xdr: tx.toXDR(),
+        network : 'testnet'
+            })).signed_envelope_xdr
+        console.log(signedAlbedoXdr)
+        await server.submitTransaction(TransactionBuilder.fromXDR(signedAlbedoXdr,Networks.TESTNET)).then((res)=>alert("you bought tokens")).catch((reason)=>{alert("something went wrong");console.log(reason)})
+        let order = await server.orderbook(asset,usdAsset).call()
+        try{
+            salePrice = (new BigFloat(order.asks[0].price)).dividedBy(10000000).toString()
+            amoutnAvailable = (new BigFloat(order.asks[0].amount)).times(10000000).toString()
+        }catch(e){
+            salePrice = "unavailable"
+            amoutnAvailable ="0"
+            viewType="sold"
+        }
+
+    }
+
+    function onclickText(){
+        expanded = !expanded
+    }
 
 </script>
 <style>
@@ -119,6 +173,12 @@
             <br>
             <strong>Type</strong> : {type}
             <br>
+            {#if viewType=="sale"}
+            <strong>Amount available</strong> : {amoutnAvailable}
+            <br>
+            <strong>Sale price</strong> : {salePrice}
+            <br>
+            {/if}
             <strong>Supply</strong> : {amount}
             <br>
         </div>
@@ -131,6 +191,15 @@
             {:else if viewType =="claimed"}
 
             <Button kind="danger">Claimed</Button>
+
+            {:else if viewType =="sale"}
+
+            <Button on:click={buyAsset} kind="primary">Buy</Button>
+            <TextInput on:click={onclickText} size="sm" placeholder ="amount to buy" bind:value={amountTobuy}/>
+            {:else if viewType =="sold"}
+
+            <Button kind="danger">Sold out</Button>
+
             {/if}
         </div>
     </div>
