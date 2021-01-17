@@ -5,6 +5,7 @@ import CreateToken from "./CreateToken.svelte"
 import Tokens from "./tokens.svelte"
 import ClaimTokens from "./ClaimTokens.svelte"
 import BuyTokens from "./BuyTokens.svelte"
+import Home from "./Home.svelte"
 const app = new App({
 	target: document.body,
 });
@@ -19,6 +20,8 @@ router.on(
 			store.set(ClaimTokens)
 		},"/buy": function(){
 			store.set(BuyTokens)
+		},"/": function(){
+			store.set(Home)
 		}
 
 	}
